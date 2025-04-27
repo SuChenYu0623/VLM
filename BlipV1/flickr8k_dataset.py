@@ -20,10 +20,6 @@ class flickr8k_dataset(Dataset):
         '''
 
         self.image_root = image_root
-        # current_dir = os.path.dirname(__file__)
-        # caption_file = os.path.join(current_dir, caption_file)
-        print('os', os.getcwd())
-        # print('caption_file', caption_file, image_root)
         self.samples = load_captions(caption_file)  # 讀取所有 (image, caption) 對
         self.transform = transform
         self.prompt = prompt
