@@ -5,3 +5,4 @@ datasets/*
 
 BlipV1/saveModels/*
 !BlipV1/saveModels/,gitkeep
+*.pth

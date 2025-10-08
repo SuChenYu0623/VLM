@@ -898,9 +898,11 @@ class BertLMHeadModel(BertPreTrainedModel):
             is_decoder=is_decoder,
             mode=mode,
         )
-        
+        # print('med outputs', type(outputs))
         sequence_output = outputs[0]
+        # print('med sequence_output', sequence_output.shape)
         prediction_scores = self.cls(sequence_output)
+        # print('med prediction_scores', prediction_scores.shape)
         
         if return_logits:
             return prediction_scores[:, :-1, :].contiguous()  

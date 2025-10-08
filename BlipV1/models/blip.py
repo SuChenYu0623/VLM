@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 from models.vit import VisionTransformer, interpolate_pos_embed
 from models.med import BertConfig, BertModel, BertLMHeadModel
-from transformers import BertTokenizer
+from transformers import BertTokenizer, GPT2TokenizerFast
 
 import torch
 # from torch import nn
@@ -104,17 +104,19 @@ class BLIP_Decoder(nn.Module):
 
         
     def forward(self, image, caption):
-        
+        # print('image:', image.shape)
+        # print('caption:', len(caption))
         image_embeds = self.visual_encoder(image) 
+        # print('image_embeds:', image_embeds.shape)
         image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)
-        
+        # print('image_atts:', image_atts.shape)
         text = self.tokenizer(caption, padding='longest', truncation=True, max_length=40, return_tensors="pt").to(image.device) 
         
         text.input_ids[:,0] = self.tokenizer.bos_token_id
-        
+        # print('text.input_ids:', text.input_ids.shape)
         decoder_targets = text.input_ids.masked_fill(text.input_ids == self.tokenizer.pad_token_id, -100)         
         decoder_targets[:,:self.prompt_length] = -100
-     
+        # print('decoder_targets', decoder_targets.shape)
         decoder_output = self.text_decoder(text.input_ids, 
                                            attention_mask = text.attention_mask, 
                                            encoder_hidden_states = image_embeds,
@@ -153,7 +155,21 @@ class BLIP_Decoder(nn.Module):
                                                   **model_kwargs)
         else:
             #beam search
-            print('input_ids', input_ids.shape)
+            # print('input_ids', input_ids.shape)
+            # print(self.text_decoder.__dict__)
+            # print(dir(self.text_decoder))
+            # import inspect
+            # print(inspect.getsource(self.text_decoder.generate))
+
+            # wrapped_method = self.text_decoder.generate
+            # wrapper_func = wrapped_method.__func__
+            # orig_generate = wrapper_func.__wrapped__
+            # print("generate 真正的來源：", orig_generate.__code__.co_filename)
+            # print("generate 從第幾行開始：", orig_generate.__code__.co_firstlineno)
+
+            # print(self.text_decoder.generate.__code__.co_filename)
+            # print(self.text_decoder.generate.__code__.co_firstlineno)
+            # print('\n =======')
             outputs = self.text_decoder.generate(input_ids=input_ids,
                                                   max_length=max_length,
                                                   min_length=min_length,
@@ -173,8 +189,12 @@ class BLIP_Decoder(nn.Module):
 def blip_decoder(pretrained='',**kwargs):
     model = BLIP_Decoder(**kwargs)
     if pretrained:
-        model,msg = load_checkpoint(model,pretrained)
-        assert(len(msg.missing_keys)==0)
+        if 'https://' in pretrained:
+            model,msg = load_checkpointOri(model,pretrained)
+            assert(len(msg.missing_keys)==0)
+        elif 'model.pth' in pretrained:
+            model,msg = load_checkpoint(model,pretrained)
+            assert(len(msg.missing_keys)==0)
     return model    
     
 def blip_feature_extractor(pretrained='',**kwargs):
@@ -185,9 +205,18 @@ def blip_feature_extractor(pretrained='',**kwargs):
     return model        
 
 def init_tokenizer():
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    # tokenizer = GPT2TokenizerFast.from_pretrained("gpt2") # gpt2
+    # tokenizer.add_special_tokens({
+    #     "bos_token": "[DEC]",
+    #     "additional_special_tokens": ["[ENC]"],
+    #     "pad_token": "[PAD]" 
+    # })
+    # tokenizer.enc_token_id = tokenizer.convert_tokens_to_ids("[ENC]")
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # bert
     tokenizer.add_special_tokens({'bos_token':'[DEC]'})
-    tokenizer.add_special_tokens({'additional_special_tokens':['[ENC]']})       
+    tokenizer.add_special_tokens({
+        'additional_special_tokens':['[ENC]']
+    })       
     tokenizer.enc_token_id = tokenizer.additional_special_tokens_ids[0]  
     return tokenizer
 

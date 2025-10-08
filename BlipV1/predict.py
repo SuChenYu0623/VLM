@@ -92,13 +92,19 @@ class PredictPretrain(PredictBase):
         return caption
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-pretrained_path = 'saveModels/BlipV1.0.pth'
-image_path = '/home/chris/Desktop/VLM/datasets/flickr8k/images/1002674143_1b742ab4b8.jpg'
-text = 'A little girl covered in paint sits in front of a painted rainbow with her hands in a bowl .'
+pretrained_path = '/home/chris/Desktop/VLM/BlipV1/record/newsDatasetV2_50/model.pth'
+image_path = '/home/chris/Desktop/VLM/datasets/newsDataset/images/c30q09638n8o_7d18fe15.webp'
+text = 'a scene from a saturday evening in a city park'
+
+# c30q09638n8o_7d18fe15.webp,Reuters Pakistani men in Lahore chant slogans at a rally expressing solidarity with the people of Kashmir.
+# c30q09638n8o_7d18fe15.webp,Kashmir has been a source of conflict between India and Pakistan for decades
+# c30q09638n8o_7d18fe15.webp,a scene from a saturday evening in a city park
+# c30q09638n8o_7d18fe15.webp,a metaphor is a figure of speech
+# c30q09638n8o_7d18fe15.webp,a man in a crowd of protesters in a protest against the pakistan
 
 # main
 print('origin text: \n', text)
-predictModel = PredictModel(pretrained_path='saveModels/BlipV1.0.pth')
+predictModel = PredictModel(pretrained_path=pretrained_path)
 caption = predictModel.predict(image_path=image_path)
 print('blip v1:\n', caption)
 

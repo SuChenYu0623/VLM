@@ -6,9 +6,9 @@ from torchvision.transforms.functional import InterpolationMode
 
 # custom
 from transform.randaugment import RandomAugment
-from flickr8k_dataset import flickr8k_dataset
+from my_dataset_template import flickr8k_dataset, pretrain_dataset
 
-def create_dataset(dataset, config, min_scale=0.5):
+def create_dataset(dataset, config, min_scale=0.5, processor=None):
     '''
     輸入
     dataset
@@ -34,8 +34,38 @@ def create_dataset(dataset, config, min_scale=0.5):
         normalize,
         ])
     
-    if dataset == 'flickr8k':
-        dataset = flickr8k_dataset(transform_train, config['image_root'], config['caption_file'], prompt=config['prompt'])
+    if dataset == 'train':
+        dataset = flickr8k_dataset(
+            transform=transform_train, 
+            image_root=config['image_root'], 
+            caption_file=config['caption_file'], 
+            prompt=config['prompt'])
+        return dataset
+    
+    elif dataset == 'valid':
+        dataset = flickr8k_dataset(
+            transform=transform_train, 
+            image_root=config['valid_image_root'], 
+            caption_file=config['valid_caption_file'], 
+            prompt=config['prompt'])
+        return dataset
+
+    if dataset == 'pretrain_train':
+        dataset = pretrain_dataset(
+             transform=transform_test,
+            processor=processor, 
+            image_root=config['image_root'], 
+            caption_file=config['caption_file'], 
+            prompt=config['prompt'])
+        return dataset
+    
+    elif dataset == 'pretrain_valid':
+        dataset = pretrain_dataset(
+             transform=transform_test,
+            processor=processor,
+            image_root=config['valid_image_root'], 
+            caption_file=config['valid_caption_file'], 
+            prompt=config['prompt'])
         return dataset
     
 def create_loader(dataset, sampler, batch_size, num_workers, collate_fn=None):
